@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
@@ -12,6 +13,7 @@ app.config['SECRET_KEY'] = 'thisisasecretkey'
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
+
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -47,19 +49,20 @@ def login():
 @app.route('/register', methods=['GET','POST'])
 def register():
     form = RegisterForm()
-
     if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data)
-        new_user = User(username=form.username.data, password=hashed_password)
+        hashed_pw = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        new_user = User(username=form.username.data, password=hashed_pw)
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('login'))
 
-
-
-
+    # DEBUG: print any validation errors
+    if form.errors:
+        print("Form errors:", form.errors)
 
     return render_template('register.html', form=form)
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
