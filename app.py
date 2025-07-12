@@ -75,6 +75,11 @@ def logout():
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
+    # Show Tasks
+    task_list = Task.query.all()
+    print(task_list)
+
+
     return render_template('dashboard.html')
 
 @ app.route('/register', methods=['GET', 'POST'])
@@ -97,4 +102,6 @@ def register():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+
+    
     app.run(debug=True)
