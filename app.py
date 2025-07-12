@@ -80,7 +80,7 @@ def dashboard():
     print(task_list)
 
 
-    return render_template('dashboard.html')
+    return render_template('dashboard.html', task_list = task_list)
 
 @ app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -102,6 +102,5 @@ def register():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-
     
     app.run(debug=True)
