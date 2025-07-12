@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, url_for, redirect
+from flask import Flask, render_template, url_for, redirect, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
@@ -33,8 +33,9 @@ class User(db.Model, UserMixin):
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
+    name = db.Column(db.String(100))  # changed from title
     complete = db.Column(db.Boolean)
+
 
 class RegisterForm(FlaskForm):
     username = StringField(validators=[InputRequired(),Length(min=4, max=20)], render_kw={"placeholder": "Username"})
@@ -77,10 +78,19 @@ def logout():
 def dashboard():
     # Show Tasks
     task_list = Task.query.all()
-    print(task_list)
-
 
     return render_template('dashboard.html', task_list = task_list)
+
+@app.route('/add', methods=['GET', 'POST'])
+def add():
+    name = request.form.get("name")  # changed from title
+    new_task = Task(name=name, complete=False)
+    db.session.add(new_task)
+    db.session.commit()
+    return redirect(url_for('dashboard'))
+
+
+
 
 @ app.route('/register', methods=['GET', 'POST'])
 def register():

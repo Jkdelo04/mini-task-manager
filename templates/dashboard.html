@@ -8,12 +8,12 @@
 <body>
 
     <h1>Task Manager</h1>
-    <form action="">
+    <form action="/add", method="post">
         <div>
 
 
             <label for="title">Task Name</label>
-            <input type="text" name = "title" placeholder="Enter Task...">
+            <input type="text" name = "name" placeholder="Enter Task...">
 
             <br>
             <button type="submit">add</button>
@@ -26,7 +26,7 @@
 
     {% for task in task_list %}
 
-        <p>{{ task.id }} | {{task.name}}</p>
+        <p>{{ task.id }} | {{ task.name }}</p>
 
         {% if task.complete == False %}
 
@@ -44,7 +44,7 @@
         <a href="/dashboard">Delete</a>
 
     {% endfor %}
-
+    <br>
     <a href="{{url_for('logout')}}">logout</a>
 
     
