@@ -7,9 +7,9 @@ from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
-
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY'] = 'thisisasecretkey'
+
 db = SQLAlchemy(app)
 
 class User(db.Model, UserMixin):
@@ -43,7 +43,7 @@ def login():
     form = LoginForm()
     return render_template('login.html', form=form)
 
-@app.route('/register' methods=['GET','POST'])
+@app.route('/register', methods=['GET','POST'])
 def register():
     form = RegisterForm()
     return render_template('register.html', form=form)
