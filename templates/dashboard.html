@@ -15,6 +15,17 @@
             <label for="title">Task Name</label>
             <input type="text" name = "name" placeholder="Enter Task...">
 
+        
+            <label for="due_date">Due Date</label>
+            <input
+                type="date"
+                name="due_date"
+                id="due_date"
+                title="Select a due date"
+                placeholder="mm-dd-yyyy"
+            />
+
+
             <br>
             <button type="submit">add</button>
 
@@ -25,25 +36,24 @@
     </form>
 
     {% for task in task_list %}
+        <p>
+            {{ task.name }}
+            {% if task.due_date %}
+            | Due: {{ task.due_date.strftime('%m-%d-%Y') }}
+            {% endif %}
+        </p>
 
-        <p>{{ task.id }} | {{ task.name }}</p>
 
-        {% if task.complete == False %}
-
+        {% if not task.complete %}
             <span>Incomplete</span>
-
         {% else %}
-
             <span>Complete!</span>
-
-
-
         {% endif %}
 
         <a href="/Update/{{task.id}}">Update</a>
         <a href="/Delete/{{task.id}}">Delete</a>
-
     {% endfor %}
+
     <br>
     <a href="{{url_for('logout')}}">logout</a>
 

@@ -7,6 +7,8 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
+from datetime import datetime
+from sqlalchemy import asc
 
 
 app = Flask(__name__, instance_relative_config=True)
@@ -41,6 +43,7 @@ class Task(db.Model):
     name = db.Column(db.String(100))  # changed from title
     complete = db.Column(db.Boolean)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    due_date = db.Column(db.Date, nullable=True)
 
 
 
@@ -84,14 +87,23 @@ def logout():
 @login_required
 def dashboard():
     # Show Tasks
-    task_list = Task.query.filter_by(user_id=current_user.id).all()
+    task_list = Task.query.filter_by(user_id=current_user.id).order_by(asc(Task.due_date)).all()
 
     return render_template('dashboard.html', task_list = task_list)
 
 @app.route('/add', methods=['POST'])
 def add():
-    name = request.form.get("name")  # changed from title
-    new_task = Task(name=name, complete=False, user_id=current_user.id)
+    name = request.form.get("name")  
+    due_date_str = request.form.get("due_date")
+
+    due_date = None
+    if due_date_str:
+        try:
+            due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass  # Handle bad date input silently or with feedback
+
+    new_task = Task(name=name, complete=False, user_id=current_user.id, due_date=due_date)
     db.session.add(new_task)
     db.session.commit()
     return redirect(url_for('dashboard'))
