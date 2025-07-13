@@ -87,11 +87,33 @@ def logout():
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    # Show Tasks
-    task_list = Task.query.filter_by(user_id=current_user.id).order_by(asc(Task.due_date)).all()
+    query = Task.query.filter_by(user_id=current_user.id)
+
+    # Get filter params
+    search_query = request.args.get('search', '', type=str)
+    status_filter = request.args.get('status', 'all', type=str)
+    sort_order = request.args.get('sort', 'asc', type=str)
     today = date.today()
 
-    return render_template('dashboard.html', task_list=task_list, today=today)
+    # Filter by search term
+    if search_query:
+        query = query.filter(Task.name.ilike(f'%{search_query}%'))
+
+    # Filter by task completion status
+    if status_filter == 'complete':
+        query = query.filter_by(complete=True)
+    elif status_filter == 'incomplete':
+        query = query.filter_by(complete=False)
+
+    # Sort
+    if sort_order == 'desc':
+        query = query.order_by(Task.due_date.desc())
+    else:
+        query = query.order_by(Task.due_date.asc())
+
+    task_list = query.all()
+
+    return render_template('dashboard.html', task_list=task_list, today=today,search_query=search_query,status_filter=status_filter,sort_order=sort_order)
 
 @app.route('/add', methods=['POST'])
 def add():

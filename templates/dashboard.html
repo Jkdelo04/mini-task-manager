@@ -5,11 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard</title>
     <style>
-      /* Container for logout in top right */
+      body {
+        font-family: sans-serif;
+        padding: 1rem;
+      }
+
       .logout-container {
         position: absolute;
         top: 10px;
         right: 10px;
+      }
+
+      .completed {
+        text-decoration: line-through;
+      }
+
+      .overdue {
+        color: red;
+      }
+
+      .task-entry {
+        margin-bottom: 0.5rem;
+      }
+
+      form.task-form,
+      form.filter-form {
+        margin-bottom: 1rem;
+      }
+
+      label {
+        margin-right: 0.5rem;
+      }
+
+      select,
+      input[type="text"],
+      input[type="date"] {
+        margin-right: 1rem;
       }
     </style>
   </head>
@@ -20,54 +51,80 @@
 
     <h1>Task Manager</h1>
 
-    <form action="/add" method="post">
-      <div>
-        <label for="title">Task Name</label>
-        <input type="text" name="name" placeholder="Enter Task..." />
+    <!-- Search + Filter + Sort Form -->
+    <form method="get" action="{{ url_for('dashboard') }}" class="filter-form">
+      <label for="search-input">Search:</label>
+      <input
+        type="text"
+        id="search-input"
+        name="search"
+        placeholder="Search tasks..."
+        value="{{ search_query }}"
+        title="Enter keywords to filter tasks"
+      />
 
-        <label for="due_date">Due Date</label>
-        <input
-          type="date"
-          name="due_date"
-          id="due_date"
-          title="Select a due date"
-          placeholder="mm-dd-yyyy"
-        />
+      <label for="status-select">Status:</label>
+      <select id="status-select" name="status" title="Filter tasks by completion status">
+        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+        <option value="complete" {% if status_filter == 'complete' %}selected{% endif %}>Complete</option>
+        <option value="incomplete" {% if status_filter == 'incomplete' %}selected{% endif %}>Incomplete</option>
+      </select>
 
-        <br />
-        <button type="submit">Add</button>
-      </div>
+      <label for="sort-select">Sort:</label>
+      <select id="sort-select" name="sort" title="Sort tasks by due date">
+        <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Oldest First</option>
+        <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Newest First</option>
+      </select>
+
+      <button type="submit">Apply</button>
     </form>
 
+    <!-- Add Task Form -->
+    <form action="/add" method="post" class="task-form">
+      <label for="name">Task Name</label>
+      <input type="text" name="name" id="name" placeholder="Enter Task..." />
+
+      <label for="due_date">Due Date</label>
+      <input
+        type="date"
+        name="due_date"
+        id="due_date"
+        title="Select a due date"
+        placeholder="mm-dd-yyyy"
+      />
+
+      <button type="submit">Add</button>
+    </form>
+
+    <!-- Task List -->
     {% for task in task_list %}
-      <p>
+      <div class="task-entry">
         {% if task.complete %}
-          <strong><span style="text-decoration: line-through;">{{ task.name }}</span></strong>
+          <strong><span class="completed">{{ task.name }}</span></strong>
         {% else %}
           <strong>{{ task.name }}</strong>
         {% endif %}
 
         {% if task.due_date %}
           {% if task.due_date < today and not task.complete %}
-            | <span style="color: red;">
-                Due: {{ task.due_date.strftime('%m-%d-%Y') }} (Overdue)
-              </span>
+            | <span class="overdue">Due: {{ task.due_date.strftime('%m-%d-%Y') }} (Overdue)</span>
           {% else %}
             | Due: {{ task.due_date.strftime('%Y-%m-%d') }}
           {% endif %}
         {% endif %}
+
         {% if not task.complete %}
-            <span>| Incomplete</span>
+          <span>| Incomplete</span>
         {% else %}
-            <span>| Complete!</span>
+          <span>| Complete!</span>
         {% endif %}
-      </p>
 
+        <br />
 
-
-      <a href="/Update/{{ task.id }}">Update</a>
-      <a href="/Delete/{{ task.id }}">Delete</a>
-      <a href="{{ url_for('edit', task_id=task.id) }}">Edit</a>
+        <a href="{{ url_for('edit', task_id=task.id) }}">Edit</a>
+        <a href="{{ url_for('update', task_id=task.id) }}">Status</a>
+        <a href="{{ url_for('delete', task_id=task.id) }}">Delete</a>
+      </div>
     {% endfor %}
   </body>
 </html>
