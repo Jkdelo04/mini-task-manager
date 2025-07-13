@@ -6,6 +6,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
+from flask_migrate import Migrate
+
 
 app = Flask(__name__, instance_relative_config=True)
 app.config['SECRET_KEY'] = 'thisisasecretkey'
@@ -16,6 +18,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
+migrate = Migrate(app, db)
+
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -30,11 +34,14 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
+    tasks = db.relationship('Task', backref='user', lazy=True)
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))  # changed from title
     complete = db.Column(db.Boolean)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
 
 
 class RegisterForm(FlaskForm):
@@ -77,14 +84,14 @@ def logout():
 @login_required
 def dashboard():
     # Show Tasks
-    task_list = Task.query.all()
+    task_list = Task.query.filter_by(user_id=current_user.id).all()
 
     return render_template('dashboard.html', task_list = task_list)
 
-@app.route('/add', methods=['GET', 'POST'])
+@app.route('/add', methods=['POST'])
 def add():
     name = request.form.get("name")  # changed from title
-    new_task = Task(name=name, complete=False)
+    new_task = Task(name=name, complete=False, user_id=current_user.id)
     db.session.add(new_task)
     db.session.commit()
     return redirect(url_for('dashboard'))
@@ -123,5 +130,6 @@ def register():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        
     
     app.run(debug=True)
