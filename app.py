@@ -89,8 +89,19 @@ def add():
     db.session.commit()
     return redirect(url_for('dashboard'))
 
+@app.route('/Update/<int:task_id>')
+def update(task_id):
+    task = Task.query.filter_by(id=task_id).first()
+    task.complete = not task.complete
+    db.session.commit()
+    return redirect(url_for('dashboard'))
 
-
+@app.route('/Delete/<int:task_id>')
+def delete(task_id):
+    task = Task.query.filter_by(id=task_id).first()
+    db.session.delete(task)
+    db.session.commit()
+    return redirect(url_for('dashboard'))
 
 @ app.route('/register', methods=['GET', 'POST'])
 def register():
