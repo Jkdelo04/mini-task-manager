@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edit Task</title>
+</head>
+<body>
+  <h1>Edit Task</h1>
+
+  <form action="{{ url_for('edit', task_id=task.id) }}" method="post">
+    <div>
+      <label for="name">Task Name</label>
+      <input type="text" name="name" id="name" value="{{ task.name }}" required />
+
+      <label for="due_date">Due Date</label>
+      <input
+        type="date"
+        name="due_date"
+        id="due_date"
+        value="{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}"
+      />
+
+      <br />
+      <button type="submit">Save</button>
+      <a href="{{ url_for('dashboard') }}">Cancel</a>
+    </div>
+  </form>
+</body>
+</html>
