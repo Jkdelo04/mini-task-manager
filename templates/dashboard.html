@@ -1,62 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard</title>
-</head>
-<body>
-
+  </head>
+  <body>
     <h1>Task Manager</h1>
-    <form action="/add", method="post">
-        <div>
 
+    <form action="/add" method="post">
+      <div>
+        <label for="title">Task Name</label>
+        <input type="text" name="name" placeholder="Enter Task..." />
 
-            <label for="title">Task Name</label>
-            <input type="text" name = "name" placeholder="Enter Task...">
+        <label for="due_date">Due Date</label>
+        <input
+          type="date"
+          name="due_date"
+          id="due_date"
+          title="Select a due date"
+          placeholder="mm-dd-yyyy"
+        />
 
-        
-            <label for="due_date">Due Date</label>
-            <input
-                type="date"
-                name="due_date"
-                id="due_date"
-                title="Select a due date"
-                placeholder="mm-dd-yyyy"
-            />
-
-
-            <br>
-            <button type="submit">add</button>
-
-
-        </div>
-
-
+        <br />
+        <button type="submit">Add</button>
+      </div>
     </form>
 
     {% for task in task_list %}
-        <p>
-            {{ task.name }}
-            {% if task.due_date %}
-            | Due: {{ task.due_date.strftime('%m-%d-%Y') }}
-            {% endif %}
-        </p>
-
-
-        {% if not task.complete %}
-            <span>Incomplete</span>
-        {% else %}
-            <span>Complete!</span>
+      <p>
+        <strong>{{ task.name }}</strong>
+        {% if task.due_date %}
+          {% if task.due_date < today and not task.complete %}
+            | <span style="color: red;">
+                Due: {{ task.due_date.strftime('%m-%d-%Y') }} (Overdue)
+              </span>
+          {% else %}
+            | Due: {{ task.due_date.strftime('%Y-%m-%d') }}
+          {% endif %}
         {% endif %}
+      </p>
 
-        <a href="/Update/{{task.id}}">Update</a>
-        <a href="/Delete/{{task.id}}">Delete</a>
+      {% if not task.complete %}
+        <span>Incomplete</span>
+      {% else %}
+        <span>Complete!</span>
+      {% endif %}
+
+      <a href="/Update/{{ task.id }}">Update</a>
+      <a href="/Delete/{{ task.id }}">Delete</a>
     {% endfor %}
 
-    <br>
-    <a href="{{url_for('logout')}}">logout</a>
-
-    
-</body>
+    <br />
+    <a href="{{ url_for('logout') }}">Logout</a>
+  </body>
 </html>

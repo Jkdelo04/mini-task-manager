@@ -9,6 +9,7 @@ from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from datetime import datetime
 from sqlalchemy import asc
+from datetime import date
 
 
 app = Flask(__name__, instance_relative_config=True)
@@ -88,8 +89,9 @@ def logout():
 def dashboard():
     # Show Tasks
     task_list = Task.query.filter_by(user_id=current_user.id).order_by(asc(Task.due_date)).all()
+    today = date.today()
 
-    return render_template('dashboard.html', task_list = task_list)
+    return render_template('dashboard.html', task_list=task_list, today=today)
 
 @app.route('/add', methods=['POST'])
 def add():
