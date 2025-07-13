@@ -1,11 +1,16 @@
 import os
-from flask import Flask, render_template, url_for, redirect
+from flask import Flask, render_template, url_for, redirect, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, ValidationError
 from flask_bcrypt import Bcrypt
+from flask_migrate import Migrate
+from datetime import datetime
+from sqlalchemy import asc
+from datetime import date
+
 
 app = Flask(__name__, instance_relative_config=True)
 app.config['SECRET_KEY'] = 'thisisasecretkey'
@@ -16,6 +21,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
+migrate = Migrate(app, db)
+
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -30,6 +37,16 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
+    tasks = db.relationship('Task', backref='user', lazy=True)
+
+class Task(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))  # changed from title
+    complete = db.Column(db.Boolean)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    due_date = db.Column(db.Date, nullable=True)
+
+
 
 class RegisterForm(FlaskForm):
     username = StringField(validators=[InputRequired(),Length(min=4, max=20)], render_kw={"placeholder": "Username"})
@@ -70,7 +87,94 @@ def logout():
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    return render_template('dashboard.html')
+    query = Task.query.filter_by(user_id=current_user.id)
+
+    # Get filter params
+    search_query = request.args.get('search', '', type=str)
+    status_filter = request.args.get('status', 'all', type=str)
+    sort_order = request.args.get('sort', 'asc', type=str)
+    today = date.today()
+
+    # Filter by search term
+    if search_query:
+        query = query.filter(Task.name.ilike(f'%{search_query}%'))
+
+    # Filter by task completion status
+    if status_filter == 'complete':
+        query = query.filter_by(complete=True)
+    elif status_filter == 'incomplete':
+        query = query.filter_by(complete=False)
+
+    # Sort
+    if sort_order == 'desc':
+        query = query.order_by(Task.due_date.desc())
+    else:
+        query = query.order_by(Task.due_date.asc())
+
+    task_list = query.all()
+
+    return render_template('dashboard.html', task_list=task_list, today=today,search_query=search_query,status_filter=status_filter,sort_order=sort_order)
+
+@app.route('/add', methods=['POST'])
+def add():
+    name = request.form.get("name")  
+    due_date_str = request.form.get("due_date")
+
+    due_date = None
+    if due_date_str:
+        try:
+            due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass  # Handle bad date input silently or with feedback
+
+    new_task = Task(name=name, complete=False, user_id=current_user.id, due_date=due_date)
+    db.session.add(new_task)
+    db.session.commit()
+    return redirect(url_for('dashboard'))
+
+@app.route('/Update/<int:task_id>')
+def update(task_id):
+    task = Task.query.filter_by(id=task_id).first()
+    task.complete = not task.complete
+    db.session.commit()
+    return redirect(url_for('dashboard'))
+
+@app.route('/Delete/<int:task_id>')
+def delete(task_id):
+    task = Task.query.filter_by(id=task_id).first()
+    db.session.delete(task)
+    db.session.commit()
+    return redirect(url_for('dashboard'))
+
+@app.route('/edit/<int:task_id>', methods=['GET', 'POST'])
+@login_required
+def edit(task_id):
+    task = Task.query.filter_by(id=task_id, user_id=current_user.id).first_or_404()
+
+    if request.method == 'POST':
+        name = request.form.get("name")
+        due_date_str = request.form.get("due_date")
+
+        due_date = None
+        if due_date_str:
+            try:
+                due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash("Invalid date format. Use YYYY-MM-DD.", "error")
+                return redirect(url_for('edit', task_id=task_id))
+
+        if not name:
+            flash("Task name cannot be empty.", "error")
+            return redirect(url_for('edit', task_id=task_id))
+
+        task.name = name
+        task.due_date = due_date
+        db.session.commit()
+        flash("Task updated successfully!", "success")
+        return redirect(url_for('dashboard'))
+
+    # GET request - render edit form
+    return render_template('edit_task.html', task=task)
 
 @ app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -92,4 +196,6 @@ def register():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        
+    
     app.run(debug=True)
