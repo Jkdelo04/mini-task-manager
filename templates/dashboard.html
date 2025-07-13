@@ -4,8 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard</title>
+    <style>
+      /* Container for logout in top right */
+      .logout-container {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+      }
+    </style>
   </head>
   <body>
+    <div class="logout-container">
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+
     <h1>Task Manager</h1>
 
     <form action="/add" method="post">
@@ -29,7 +41,12 @@
 
     {% for task in task_list %}
       <p>
-        <strong>{{ task.name }}</strong>
+        {% if task.complete %}
+          <strong><span style="text-decoration: line-through;">{{ task.name }}</span></strong>
+        {% else %}
+          <strong>{{ task.name }}</strong>
+        {% endif %}
+
         {% if task.due_date %}
           {% if task.due_date < today and not task.complete %}
             | <span style="color: red;">
@@ -39,19 +56,17 @@
             | Due: {{ task.due_date.strftime('%Y-%m-%d') }}
           {% endif %}
         {% endif %}
+        {% if not task.complete %}
+            <span>| Incomplete</span>
+        {% else %}
+            <span>| Complete!</span>
+        {% endif %}
       </p>
 
-      {% if not task.complete %}
-        <span>Incomplete</span>
-      {% else %}
-        <span>Complete!</span>
-      {% endif %}
+
 
       <a href="/Update/{{ task.id }}">Update</a>
       <a href="/Delete/{{ task.id }}">Delete</a>
     {% endfor %}
-
-    <br />
-    <a href="{{ url_for('logout') }}">Logout</a>
   </body>
 </html>
