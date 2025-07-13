@@ -67,6 +67,7 @@
 
       <a href="/Update/{{ task.id }}">Update</a>
       <a href="/Delete/{{ task.id }}">Delete</a>
+      <a href="{{ url_for('edit', task_id=task.id) }}">Edit</a>
     {% endfor %}
   </body>
 </html>
