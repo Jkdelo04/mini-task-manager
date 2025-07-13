@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, url_for, redirect, request
+from flask import Flask, render_template, url_for, redirect, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
@@ -123,6 +123,36 @@ def delete(task_id):
     db.session.delete(task)
     db.session.commit()
     return redirect(url_for('dashboard'))
+
+@app.route('/edit/<int:task_id>', methods=['GET', 'POST'])
+@login_required
+def edit(task_id):
+    task = Task.query.filter_by(id=task_id, user_id=current_user.id).first_or_404()
+
+    if request.method == 'POST':
+        name = request.form.get("name")
+        due_date_str = request.form.get("due_date")
+
+        due_date = None
+        if due_date_str:
+            try:
+                due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash("Invalid date format. Use YYYY-MM-DD.", "error")
+                return redirect(url_for('edit', task_id=task_id))
+
+        if not name:
+            flash("Task name cannot be empty.", "error")
+            return redirect(url_for('edit', task_id=task_id))
+
+        task.name = name
+        task.due_date = due_date
+        db.session.commit()
+        flash("Task updated successfully!", "success")
+        return redirect(url_for('dashboard'))
+
+    # GET request - render edit form
+    return render_template('edit_task.html', task=task)
 
 @ app.route('/register', methods=['GET', 'POST'])
 def register():
