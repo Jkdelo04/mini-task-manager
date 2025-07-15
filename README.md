@@ -15,3 +15,34 @@ A full-stack Flask web application that allows users to manage their personal to
 - 🧑‍💻 User-specific task dashboard
 
 
+## 📁 File Structure
+
+mini-task-manager/
+│
+├── app/
+│   ├── __init__.py
+│   ├── models.py
+│   ├── forms.py
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   ├── auth_routes.py
+│   │   └── task_routes.py
+│   ├── templates/
+│   │   ├── base.html
+│   │   ├── home.html
+│   │   ├── login.html
+│   │   ├── register.html
+│   │   ├── dashboard.html
+│   │   └── edit_task.html
+│   ├── static/  # (Optional: CSS/JS files)
+│   └── extensions.py
+│
+├── migrations/
+│
+├── instance/
+│   └── database.db
+│
+├── config.py
+├── run.py
+└── requirements.txt
+
